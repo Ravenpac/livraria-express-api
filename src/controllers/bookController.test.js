@@ -265,4 +265,71 @@ describe('BookController', () => {
       });
     });
   });
+
+  describe('listBooksByPublisher', () => {
+    it('filtra livros por editora', async () => {
+      const books = [{ titulo: 'A', editora: 'HarperCollins' }];
+      mockFind.mockResolvedValue(books);
+      const req = mockReq({ query: { editora: 'HarperCollins' } });
+      const res = mockRes();
+
+      await BookController.listBooksByPublisher(req, res);
+
+      expect(mockFind).toHaveBeenCalledWith({ editora: 'HarperCollins' });
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith(books);
+    });
+
+    it('filtra livros por título', async () => {
+      const books = [{ titulo: 'O Hobbit' }];
+      mockFind.mockResolvedValue(books);
+      const req = mockReq({ query: { titulo: 'O Hobbit' } });
+      const res = mockRes();
+
+      await BookController.listBooksByPublisher(req, res);
+
+      expect(mockFind).toHaveBeenCalledWith({ titulo: 'O Hobbit' });
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith(books);
+    });
+
+    it('filtra livros por editora e título', async () => {
+      const books = [{ titulo: 'O Hobbit', editora: 'HarperCollins' }];
+      mockFind.mockResolvedValue(books);
+      const req = mockReq({ query: { editora: 'HarperCollins', titulo: 'O Hobbit' } });
+      const res = mockRes();
+
+      await BookController.listBooksByPublisher(req, res);
+
+      expect(mockFind).toHaveBeenCalledWith({ editora: 'HarperCollins', titulo: 'O Hobbit' });
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith(books);
+    });
+
+    it('retorna todos quando não há filtros', async () => {
+      const books = [{ titulo: 'A' }, { titulo: 'B' }];
+      mockFind.mockResolvedValue(books);
+      const req = mockReq({ query: {} });
+      const res = mockRes();
+
+      await BookController.listBooksByPublisher(req, res);
+
+      expect(mockFind).toHaveBeenCalledWith({});
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith(books);
+    });
+
+    it('retorna 500 em caso de erro', async () => {
+      mockFind.mockRejectedValue(new Error('DB error'));
+      const req = mockReq({ query: { editora: 'X' } });
+      const res = mockRes();
+
+      await BookController.listBooksByPublisher(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.send).toHaveBeenCalledWith({
+        message: 'DB error - Falha ao listar os livros por editora.',
+      });
+    });
+  });
 });

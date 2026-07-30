@@ -46,13 +46,14 @@ npm test
 
 ### Livros
 
-| Método | Endpoint      | Descrição       |
-| ------ | ------------- | --------------- |
-| GET    | `/livros`     | Listar todos    |
-| GET    | `/livros/:id` | Buscar por ID   |
-| POST   | `/livros`     | Adicionar livro |
-| PUT    | `/livros/:id` | Atualizar livro |
-| DELETE | `/livros/:id` | Excluir livro   |
+| Método | Endpoint        | Descrição                                         |
+| ------ | --------------- | ------------------------------------------------- |
+| GET    | `/livros`       | Listar todos                                      |
+| GET    | `/livros/busca` | Buscar por editora/titulo (`?editora=X&titulo=Y`) |
+| GET    | `/livros/:id`   | Buscar por ID                                     |
+| POST   | `/livros`       | Adicionar livro                                   |
+| PUT    | `/livros/:id`   | Atualizar livro                                   |
+| DELETE | `/livros/:id`   | Excluir livro                                     |
 
 ### Autores
 

@@ -5,6 +5,8 @@ const router = express.Router();
 
 router.get('/livros', BookController.listBooks);
 
+router.get('/livros/busca', BookController.listBooksByPublisher);
+
 router.get('/livros/:id', BookController.getBookById);
 
 router.post('/livros', BookController.createBook);

@@ -83,6 +83,25 @@ class BookController {
       res.status(500).send({ message: `${error.message} - Falha ao excluir o livro.` });
     }
   }
+
+  static async listBooksByPublisher(req, res) {
+    try {
+      const publisher = req.query.editora;
+      const title = req.query.titulo;
+
+      const filter = {};
+      if (publisher) filter.editora = publisher;
+      if (title) filter.titulo = title;
+
+      const books = await book.find(filter);
+
+      res.status(200).json(books);
+    } catch (error) {
+      res
+        .status(500)
+        .send({ message: `${error.message} - Falha ao listar os livros por editora.` });
+    }
+  }
 }
 
 export default BookController;
