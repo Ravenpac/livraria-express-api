@@ -68,10 +68,25 @@ npm test
 
 **Livro**
 
+Request (POST/PUT):
+
 ```json
 {
   "titulo": "O Senhor dos Anéis",
-  "autor": { "nome": "J.R.R. Tolkien" },
+  "autor": "ID_DO_AUTOR",
+  "editora": "HarperCollins",
+  "preco": 89.9,
+  "paginas": 1200
+}
+```
+
+Response (o autor é expandido com dados completos):
+
+```json
+{
+  "_id": "abc123",
+  "titulo": "O Senhor dos Anéis",
+  "autor": { "_id": "autor123", "nome": "J.R.R. Tolkien", "nacionalidade": "Inglaterra" },
   "editora": "HarperCollins",
   "preco": 89.9,
   "paginas": 1200

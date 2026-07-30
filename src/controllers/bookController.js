@@ -1,4 +1,5 @@
 import book from '../models/Book.js';
+import { author } from '../models/Author.js';
 
 class BookController {
   static async listBooks(req, res) {
@@ -27,12 +28,16 @@ class BookController {
   }
 
   static async createBook(req, res) {
+    const newBook = req.body;
+
     try {
-      const newBook = await book.create(req.body);
+      const foundAuthor = await author.findById(newBook.autor);
+      const fullBook = { ...newBook, autor: { ...foundAuthor._doc } };
+      const createdBook = await book.create(fullBook);
 
       res.status(201).json({
         message: 'Livro adicionado com sucesso',
-        livro: newBook,
+        livro: createdBook,
       });
     } catch (error) {
       res.status(500).send({ message: `${error.message} - Falha ao adicionar o livro.` });
@@ -40,9 +45,19 @@ class BookController {
   }
 
   static async updateBook(req, res) {
+    const updatedBookData = req.body;
+    const id = req.params.id;
+
     try {
-      const id = req.params.id;
-      const updatedBook = await book.findByIdAndUpdate(id, req.body, { new: true });
+      if (updatedBookData.autor) {
+        const foundAuthor = await author.findById(updatedBookData.autor);
+        if (!foundAuthor) {
+          return res.status(404).send('Autor não encontrado');
+        }
+        updatedBookData.autor = { ...foundAuthor._doc };
+      }
+
+      const updatedBook = await book.findByIdAndUpdate(id, updatedBookData, { new: true });
 
       if (updatedBook) {
         res.status(200).json(updatedBook);
