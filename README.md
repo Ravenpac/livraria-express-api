@@ -1,6 +1,6 @@
 # 📚 Books API
 
-API REST para gerenciar uma coleção de livros, construída com **Node.js**, **Express** e **MongoDB**.
+API REST para gerenciar livros e autores, construída com **Node.js**, **Express** e **MongoDB**.
 
 ## Stack
 
@@ -44,25 +44,47 @@ npm test
 
 ## API
 
+### Livros
+
 | Método | Endpoint      | Descrição       |
 | ------ | ------------- | --------------- |
-| GET    | `/`           | Health check    |
 | GET    | `/livros`     | Listar todos    |
 | GET    | `/livros/:id` | Buscar por ID   |
 | POST   | `/livros`     | Adicionar livro |
 | PUT    | `/livros/:id` | Atualizar livro |
 | DELETE | `/livros/:id` | Excluir livro   |
 
-### Schema do livro
+### Autores
+
+| Método | Endpoint       | Descrição       |
+| ------ | -------------- | --------------- |
+| GET    | `/autores`     | Listar todos    |
+| GET    | `/autores/:id` | Buscar por ID   |
+| POST   | `/autores`     | Adicionar autor |
+| PUT    | `/autores/:id` | Atualizar autor |
+| DELETE | `/autores/:id` | Excluir autor   |
+
+### Schemas
+
+**Livro**
 
 ```json
 {
   "titulo": "O Senhor dos Anéis",
-  "autor": "J.R.R. Tolkien",
+  "autor": { "nome": "J.R.R. Tolkien" },
   "editora": "HarperCollins",
   "preco": 89.9,
   "paginas": 1200
 }
 ```
 
-Apenas `titulo` e `autor` são obrigatórios. O servidor roda em `http://localhost:3000`.
+**Autor**
+
+```json
+{
+  "nome": "J.R.R. Tolkien",
+  "nacionalidade": "Inglaterra"
+}
+```
+
+Apenas `titulo` (livro) e `nome` (autor) são obrigatórios. O servidor roda em `http://localhost:3000`.

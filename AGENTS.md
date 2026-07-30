@@ -18,9 +18,12 @@ Simple Express + Mongoose REST API (Alura course project). Single package, ES mo
 - `server.js` — entrypoint; imports `dotenv/config`, bootstraps app on `:3000`
 - `src/app.js` — Express setup + MongoDB connect (top-level `await`)
 - `src/config/dbConnect.js` — `mongoose.connect(process.env.DB_CONNECTION_STRING)`
-- `src/models/Book.js` — Schema: `titulo` (req), `autor` (req), `editora`, `preco`, `paginas`; `versionKey: false`
+- `src/models/Book.js` — Schema: `titulo` (req), `autor` (embedded `authorSchema`), `editora`, `preco`, `paginas`; `versionKey: false`
+- `src/models/Author.js` — Schema: `nome` (req), `nacionalidade`; exports `{author, authorSchema}` (named)
 - `src/controllers/bookController.js` — static methods: `listBooks`, `getBookById`, `createBook`, `updateBook`, `deleteBook`
+- `src/controllers/authorController.js` — static methods: `listAuthors`, `getAuthorById`, `createAuthor`, `updateAuthor`, `deleteAuthor`
 - `src/routes/bookRoutes.js` — RESTful CRUD for `/livros` (GET, POST, GET/:id, PUT/:id, DELETE/:id)
+- `src/routes/authorRoutes.js` — RESTful CRUD for `/autores` (GET, POST, GET/:id, PUT/:id, DELETE/:id)
 
 ## Key facts
 
