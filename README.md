@@ -1,0 +1,68 @@
+# 📚 Books API
+
+API REST para gerenciar uma coleção de livros, construída com **Node.js**, **Express** e **MongoDB**.
+
+## Stack
+
+| Ferramenta    | Finalidade             |
+| ------------- | ---------------------- |
+| Node.js 20    | Runtime                |
+| Express 4     | Framework HTTP         |
+| Mongoose 7    | ODM do MongoDB         |
+| MongoDB Atlas | Banco de dados         |
+| ESLint        | Linting                |
+| Prettier      | Formatação             |
+| EditorConfig  | Consistência no editor |
+| Nodemon       | Hot-reload em dev      |
+| Jest          | Testes                 |
+
+## Setup
+
+```bash
+# instalar dependências
+yarn
+
+# criar .env com a string de conexão do MongoDB
+# DB_CONNECTION_STRING=mongodb+srv://...
+```
+
+## Uso
+
+```bash
+# desenvolvimento (com auto-reload)
+npm run dev
+
+# linting e formatação
+npm run lint
+npm run lint:fix
+npm run format
+npm run format:check
+
+# testes
+npm test
+```
+
+## API
+
+| Método | Endpoint     | Descrição       |
+| ------ | ------------ | --------------- |
+| GET    | `/`          | Health check    |
+| GET    | `/books`     | Listar todos    |
+| GET    | `/books/:id` | Buscar por ID   |
+| POST   | `/books`     | Adicionar livro |
+| PUT    | `/books/:id` | Atualizar livro |
+| DELETE | `/books/:id` | Excluir livro   |
+
+### Schema do livro
+
+```json
+{
+  "titulo": "O Senhor dos Anéis",
+  "autor": "J.R.R. Tolkien",
+  "editora": "HarperCollins",
+  "preco": 89.9,
+  "paginas": 1200
+}
+```
+
+Apenas `titulo` e `autor` são obrigatórios. O servidor roda em `http://localhost:3000`.
