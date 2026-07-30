@@ -44,14 +44,14 @@ npm test
 
 ## API
 
-| Método | Endpoint     | Descrição       |
-| ------ | ------------ | --------------- |
-| GET    | `/`          | Health check    |
-| GET    | `/books`     | Listar todos    |
-| GET    | `/books/:id` | Buscar por ID   |
-| POST   | `/books`     | Adicionar livro |
-| PUT    | `/books/:id` | Atualizar livro |
-| DELETE | `/books/:id` | Excluir livro   |
+| Método | Endpoint      | Descrição       |
+| ------ | ------------- | --------------- |
+| GET    | `/`           | Health check    |
+| GET    | `/livros`     | Listar todos    |
+| GET    | `/livros/:id` | Buscar por ID   |
+| POST   | `/livros`     | Adicionar livro |
+| PUT    | `/livros/:id` | Atualizar livro |
+| DELETE | `/livros/:id` | Excluir livro   |
 
 ### Schema do livro
 
