@@ -36,7 +36,7 @@ beforeEach(() => {
 
 describe('BookController', () => {
   describe('listBooks', () => {
-    it('returns all books with status 200', async () => {
+    it('retorna todos os livros com status 200', async () => {
       const books = [{ titulo: 'A' }, { titulo: 'B' }];
       mockFind.mockResolvedValue(books);
       const req = mockReq();
@@ -49,7 +49,7 @@ describe('BookController', () => {
       expect(res.json).toHaveBeenCalledWith(books);
     });
 
-    it('returns 500 on error', async () => {
+    it('retorna 500 em caso de erro', async () => {
       mockFind.mockRejectedValue(new Error('DB error'));
       const req = mockReq();
       const res = mockRes();
@@ -64,7 +64,7 @@ describe('BookController', () => {
   });
 
   describe('getBookById', () => {
-    it('returns a book with status 200', async () => {
+    it('retorna um livro com status 200', async () => {
       const book = { _id: 'abc123', titulo: 'Teste' };
       mockFindById.mockResolvedValue(book);
       const req = mockReq({ params: { id: 'abc123' } });
@@ -77,7 +77,7 @@ describe('BookController', () => {
       expect(res.json).toHaveBeenCalledWith(book);
     });
 
-    it('returns 404 when book is not found', async () => {
+    it('retorna 404 quando o livro não é encontrado', async () => {
       mockFindById.mockResolvedValue(null);
       const req = mockReq({ params: { id: 'inexistente' } });
       const res = mockRes();
@@ -88,7 +88,7 @@ describe('BookController', () => {
       expect(res.send).toHaveBeenCalledWith('Livro não encontrado');
     });
 
-    it('returns 500 on error', async () => {
+    it('retorna 500 em caso de erro', async () => {
       mockFindById.mockRejectedValue(new Error('CastError'));
       const req = mockReq({ params: { id: 'invalido' } });
       const res = mockRes();
@@ -103,7 +103,7 @@ describe('BookController', () => {
   });
 
   describe('createBook', () => {
-    it('creates a book and returns status 201', async () => {
+    it('cria um livro e retorna status 201', async () => {
       const body = { titulo: 'Novo', autor: 'Autor' };
       const created = { _id: 'novo123', ...body };
       mockCreate.mockResolvedValue(created);
@@ -120,7 +120,7 @@ describe('BookController', () => {
       });
     });
 
-    it('returns 500 on error', async () => {
+    it('retorna 500 em caso de erro', async () => {
       mockCreate.mockRejectedValue(new Error('Validation error'));
       const req = mockReq({ body: {} });
       const res = mockRes();
@@ -135,7 +135,7 @@ describe('BookController', () => {
   });
 
   describe('updateBook', () => {
-    it('updates a book and returns status 200', async () => {
+    it('atualiza um livro e retorna status 200', async () => {
       const updated = { _id: 'abc123', titulo: 'Atualizado' };
       mockFindByIdAndUpdate.mockResolvedValue(updated);
       const req = mockReq({ params: { id: 'abc123' }, body: { titulo: 'Atualizado' } });
@@ -152,7 +152,7 @@ describe('BookController', () => {
       expect(res.json).toHaveBeenCalledWith(updated);
     });
 
-    it('returns 404 when book is not found', async () => {
+    it('retorna 404 quando o livro não é encontrado', async () => {
       mockFindByIdAndUpdate.mockResolvedValue(null);
       const req = mockReq({ params: { id: 'inexistente' } });
       const res = mockRes();
@@ -163,7 +163,7 @@ describe('BookController', () => {
       expect(res.send).toHaveBeenCalledWith('Livro não encontrado');
     });
 
-    it('returns 500 on error', async () => {
+    it('retorna 500 em caso de erro', async () => {
       mockFindByIdAndUpdate.mockRejectedValue(new Error('CastError'));
       const req = mockReq({ params: { id: 'invalido' } });
       const res = mockRes();
@@ -178,7 +178,7 @@ describe('BookController', () => {
   });
 
   describe('deleteBook', () => {
-    it('deletes a book and returns status 200', async () => {
+    it('exclui um livro e retorna status 200', async () => {
       const deleted = { _id: 'abc123', titulo: 'Removido' };
       mockFindByIdAndDelete.mockResolvedValue(deleted);
       const req = mockReq({ params: { id: 'abc123' } });
@@ -191,7 +191,7 @@ describe('BookController', () => {
       expect(res.send).toHaveBeenCalledWith('Livro excluído com sucesso');
     });
 
-    it('returns 404 when book is not found', async () => {
+    it('retorna 404 quando o livro não é encontrado', async () => {
       mockFindByIdAndDelete.mockResolvedValue(null);
       const req = mockReq({ params: { id: 'inexistente' } });
       const res = mockRes();
@@ -202,7 +202,7 @@ describe('BookController', () => {
       expect(res.send).toHaveBeenCalledWith('Livro não encontrado');
     });
 
-    it('returns 500 on error', async () => {
+    it('retorna 500 em caso de erro', async () => {
       mockFindByIdAndDelete.mockRejectedValue(new Error('CastError'));
       const req = mockReq({ params: { id: 'invalido' } });
       const res = mockRes();
