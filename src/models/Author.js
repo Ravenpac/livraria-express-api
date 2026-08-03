@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const authorSchema = new mongoose.Schema(
   {
@@ -8,7 +8,7 @@ const authorSchema = new mongoose.Schema(
     },
     nome: {
       type: String,
-      required: true,
+      required: [true, "O nome do(a) autor(a) é obrigatório"],
     },
     nacionalidade: {
       type: String,
@@ -17,6 +17,6 @@ const authorSchema = new mongoose.Schema(
   { versionKey: false },
 );
 
-const author = mongoose.model('autores', authorSchema);
+const author = mongoose.model("autores", authorSchema);
 
 export { author, authorSchema };

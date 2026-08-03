@@ -1,23 +1,23 @@
-import globals from 'globals';
-import js from '@eslint/js';
+import globals from "globals";
+import js from "@eslint/js";
 
 export default [
   js.configs.recommended,
   {
     languageOptions: {
       ecmaVersion: 2022,
-      sourceType: 'module',
+      sourceType: "module",
       globals: {
         ...globals.node,
       },
     },
     rules: {
-      'no-console': 'warn',
-      'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      "no-console": "off",
+      "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
     },
   },
   {
-    files: ['**/*.test.js'],
+    files: ["**/*.test.js"],
     languageOptions: {
       globals: {
         ...globals.jest,
@@ -25,6 +25,6 @@ export default [
     },
   },
   {
-    ignores: ['.env'],
+    ignores: [".env"],
   },
 ];

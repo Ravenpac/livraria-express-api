@@ -1,18 +1,19 @@
-import book from '../models/Book.js';
-import { author } from '../models/Author.js';
+import { book } from "../models/index.js";
+import { author } from "../models/index.js";
+import NotFoundError from "../errors/NotFoundError.js";
 
 class BookController {
-  static async listBooks(req, res) {
+  static async listBooks(req, res, next) {
     try {
       const books = await book.find({});
 
       res.status(200).json(books);
     } catch (error) {
-      res.status(500).send({ message: `${error.message} - Falha ao listar os livros.` });
+      next(error);
     }
   }
 
-  static async getBookById(req, res) {
+  static async getBookById(req, res, next) {
     try {
       const id = req.params.id;
       const foundBook = await book.findById(id);
@@ -20,31 +21,38 @@ class BookController {
       if (foundBook) {
         res.status(200).json(foundBook);
       } else {
-        res.status(404).send('Livro não encontrado');
+        next(new NotFoundError("Livro não encontrado"));
       }
     } catch (error) {
-      res.status(500).send({ message: `${error.message} - Falha ao buscar o livro.` });
+      next(error);
     }
   }
 
-  static async createBook(req, res) {
+  static async createBook(req, res, next) {
     const newBook = req.body;
 
     try {
-      const foundAuthor = await author.findById(newBook.autor);
-      const fullBook = { ...newBook, autor: { ...foundAuthor._doc } };
+      const fullBook = { ...newBook };
+
+      if (newBook.autor) {
+        const foundAuthor = await author.findById(newBook.autor);
+        fullBook.autor = { ...foundAuthor._doc };
+      } else {
+        delete fullBook.autor;
+      }
+
       const createdBook = await book.create(fullBook);
 
       res.status(201).json({
-        message: 'Livro adicionado com sucesso',
+        message: "Livro adicionado com sucesso",
         livro: createdBook,
       });
     } catch (error) {
-      res.status(500).send({ message: `${error.message} - Falha ao adicionar o livro.` });
+      next(error);
     }
   }
 
-  static async updateBook(req, res) {
+  static async updateBook(req, res, next) {
     const updatedBookData = req.body;
     const id = req.params.id;
 
@@ -52,7 +60,7 @@ class BookController {
       if (updatedBookData.autor) {
         const foundAuthor = await author.findById(updatedBookData.autor);
         if (!foundAuthor) {
-          return res.status(404).send('Autor não encontrado');
+          return next(new NotFoundError("Autor não encontrado"));
         }
         updatedBookData.autor = { ...foundAuthor._doc };
       }
@@ -62,29 +70,29 @@ class BookController {
       if (updatedBook) {
         res.status(200).json(updatedBook);
       } else {
-        res.status(404).send('Livro não encontrado');
+        next(new NotFoundError("Livro não encontrado"));
       }
     } catch (error) {
-      res.status(500).send({ message: `${error.message} - Falha ao atualizar o livro.` });
+      next(error);
     }
   }
 
-  static async deleteBook(req, res) {
+  static async deleteBook(req, res, next) {
     try {
       const id = req.params.id;
       const deletedBook = await book.findByIdAndDelete(id);
 
       if (deletedBook) {
-        res.status(200).send('Livro excluído com sucesso');
+        res.status(200).send({ message: "Livro excluído com sucesso" });
       } else {
-        res.status(404).send('Livro não encontrado');
+        next(new NotFoundError("Livro não encontrado"));
       }
     } catch (error) {
-      res.status(500).send({ message: `${error.message} - Falha ao excluir o livro.` });
+      next(error);
     }
   }
 
-  static async listBooksByPublisher(req, res) {
+  static async listBooksByPublisher(req, res, next) {
     try {
       const publisher = req.query.editora;
       const title = req.query.titulo;
@@ -97,9 +105,7 @@ class BookController {
 
       res.status(200).json(books);
     } catch (error) {
-      res
-        .status(500)
-        .send({ message: `${error.message} - Falha ao listar os livros por editora.` });
+      next(error);
     }
   }
 }

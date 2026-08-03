@@ -1,4 +1,5 @@
-import { jest } from '@jest/globals';
+import { jest } from "@jest/globals";
+import NotFoundError from "../errors/NotFoundError.js";
 
 const mockFind = jest.fn();
 const mockFindById = jest.fn();
@@ -6,7 +7,7 @@ const mockCreate = jest.fn();
 const mockFindByIdAndUpdate = jest.fn();
 const mockFindByIdAndDelete = jest.fn();
 
-jest.unstable_mockModule('../models/Author.js', () => ({
+jest.unstable_mockModule("../models/Author.js", () => ({
   author: {
     find: mockFind,
     findById: mockFindById,
@@ -16,7 +17,7 @@ jest.unstable_mockModule('../models/Author.js', () => ({
   },
 }));
 
-const AuthorController = (await import('./authorController.js')).default;
+const AuthorController = (await import("./authorController.js")).default;
 
 function mockReq(overrides = {}) {
   return { params: {}, body: {}, ...overrides };
@@ -34,10 +35,10 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
-describe('AuthorController', () => {
-  describe('listAuthors', () => {
-    it('retorna todos os autores com status 200', async () => {
-      const authors = [{ nome: 'Machado de Assis' }, { nome: 'Clarice Lispector' }];
+describe("AuthorController", () => {
+  describe("listAuthors", () => {
+    it("retorna todos os autores com status 200", async () => {
+      const authors = [{ nome: "Machado de Assis" }, { nome: "Clarice Lispector" }];
       mockFind.mockResolvedValue(authors);
       const req = mockReq();
       const res = mockRes();
@@ -49,63 +50,67 @@ describe('AuthorController', () => {
       expect(res.json).toHaveBeenCalledWith(authors);
     });
 
-    it('retorna 500 em caso de erro', async () => {
-      mockFind.mockRejectedValue(new Error('DB error'));
+    it("encaminha o erro ao middleware de tratamento de erros", async () => {
+      const error = new Error("DB error");
+      mockFind.mockRejectedValue(error);
       const req = mockReq();
       const res = mockRes();
+      const next = jest.fn();
 
-      await AuthorController.listAuthors(req, res);
+      await AuthorController.listAuthors(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.send).toHaveBeenCalledWith({
-        message: 'DB error - Falha ao listar os autores.',
-      });
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(next).toHaveBeenCalledWith(error);
     });
   });
 
-  describe('getAuthorById', () => {
-    it('retorna um autor com status 200', async () => {
-      const author = { _id: 'abc123', nome: 'Machado de Assis' };
+  describe("getAuthorById", () => {
+    it("retorna um autor com status 200", async () => {
+      const author = { _id: "abc123", nome: "Machado de Assis" };
       mockFindById.mockResolvedValue(author);
-      const req = mockReq({ params: { id: 'abc123' } });
+      const req = mockReq({ params: { id: "abc123" } });
       const res = mockRes();
 
       await AuthorController.getAuthorById(req, res);
 
-      expect(mockFindById).toHaveBeenCalledWith('abc123');
+      expect(mockFindById).toHaveBeenCalledWith("abc123");
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(author);
     });
 
-    it('retorna 404 quando o autor não é encontrado', async () => {
+    it("encaminha NotFoundError ao middleware quando o autor não é encontrado", async () => {
       mockFindById.mockResolvedValue(null);
-      const req = mockReq({ params: { id: 'inexistente' } });
+      const req = mockReq({ params: { id: "inexistente" } });
       const res = mockRes();
+      const next = jest.fn();
 
-      await AuthorController.getAuthorById(req, res);
+      await AuthorController.getAuthorById(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.send).toHaveBeenCalledWith('Autor não encontrado');
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({ message: "Autor não encontrado", status: 404 }),
+      );
+      expect(next.mock.calls[0][0]).toBeInstanceOf(NotFoundError);
     });
 
-    it('retorna 500 em caso de erro', async () => {
-      mockFindById.mockRejectedValue(new Error('CastError'));
-      const req = mockReq({ params: { id: 'invalido' } });
+    it("encaminha o erro ao middleware de tratamento de erros", async () => {
+      const error = new Error("CastError");
+      mockFindById.mockRejectedValue(error);
+      const req = mockReq({ params: { id: "invalido" } });
       const res = mockRes();
+      const next = jest.fn();
 
-      await AuthorController.getAuthorById(req, res);
+      await AuthorController.getAuthorById(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.send).toHaveBeenCalledWith({
-        message: 'CastError - Falha ao buscar o autor.',
-      });
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(next).toHaveBeenCalledWith(error);
     });
   });
 
-  describe('createAuthor', () => {
-    it('cria um autor e retorna status 201', async () => {
-      const body = { nome: 'Novo Autor', nacionalidade: 'Brasileira' };
-      const created = { _id: 'novo123', ...body };
+  describe("createAuthor", () => {
+    it("cria um autor e retorna status 201", async () => {
+      const body = { nome: "Novo Autor", nacionalidade: "Brasileira" };
+      const created = { _id: "novo123", ...body };
       mockCreate.mockResolvedValue(created);
       const req = mockReq({ body });
       const res = mockRes();
@@ -115,104 +120,112 @@ describe('AuthorController', () => {
       expect(mockCreate).toHaveBeenCalledWith(body);
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith({
-        message: 'Autor adicionado com sucesso',
+        message: "Autor adicionado com sucesso",
         autor: created,
       });
     });
 
-    it('retorna 500 em caso de erro', async () => {
-      mockCreate.mockRejectedValue(new Error('Validation error'));
+    it("encaminha o erro ao middleware de tratamento de erros", async () => {
+      const error = new Error("Validation error");
+      mockCreate.mockRejectedValue(error);
       const req = mockReq({ body: {} });
       const res = mockRes();
+      const next = jest.fn();
 
-      await AuthorController.createAuthor(req, res);
+      await AuthorController.createAuthor(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.send).toHaveBeenCalledWith({
-        message: 'Validation error - Falha ao adicionar o autor.',
-      });
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(next).toHaveBeenCalledWith(error);
     });
   });
 
-  describe('updateAuthor', () => {
-    it('atualiza um autor e retorna status 200', async () => {
-      const updated = { _id: 'abc123', nome: 'Atualizado' };
+  describe("updateAuthor", () => {
+    it("atualiza um autor e retorna status 200", async () => {
+      const updated = { _id: "abc123", nome: "Atualizado" };
       mockFindByIdAndUpdate.mockResolvedValue(updated);
-      const req = mockReq({ params: { id: 'abc123' }, body: { nome: 'Atualizado' } });
+      const req = mockReq({ params: { id: "abc123" }, body: { nome: "Atualizado" } });
       const res = mockRes();
 
       await AuthorController.updateAuthor(req, res);
 
       expect(mockFindByIdAndUpdate).toHaveBeenCalledWith(
-        'abc123',
-        { nome: 'Atualizado' },
+        "abc123",
+        { nome: "Atualizado" },
         { new: true },
       );
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(updated);
     });
 
-    it('retorna 404 quando o autor não é encontrado', async () => {
+    it("encaminha NotFoundError ao middleware quando o autor não é encontrado", async () => {
       mockFindByIdAndUpdate.mockResolvedValue(null);
-      const req = mockReq({ params: { id: 'inexistente' } });
+      const req = mockReq({ params: { id: "inexistente" } });
       const res = mockRes();
+      const next = jest.fn();
 
-      await AuthorController.updateAuthor(req, res);
+      await AuthorController.updateAuthor(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.send).toHaveBeenCalledWith('Autor não encontrado');
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({ message: "Autor não encontrado", status: 404 }),
+      );
+      expect(next.mock.calls[0][0]).toBeInstanceOf(NotFoundError);
     });
 
-    it('retorna 500 em caso de erro', async () => {
-      mockFindByIdAndUpdate.mockRejectedValue(new Error('CastError'));
-      const req = mockReq({ params: { id: 'invalido' } });
+    it("encaminha o erro ao middleware de tratamento de erros", async () => {
+      const error = new Error("CastError");
+      mockFindByIdAndUpdate.mockRejectedValue(error);
+      const req = mockReq({ params: { id: "invalido" } });
       const res = mockRes();
+      const next = jest.fn();
 
-      await AuthorController.updateAuthor(req, res);
+      await AuthorController.updateAuthor(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.send).toHaveBeenCalledWith({
-        message: 'CastError - Falha ao atualizar o autor.',
-      });
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(next).toHaveBeenCalledWith(error);
     });
   });
 
-  describe('deleteAuthor', () => {
-    it('exclui um autor e retorna status 200', async () => {
-      const deleted = { _id: 'abc123', nome: 'Removido' };
+  describe("deleteAuthor", () => {
+    it("exclui um autor e retorna status 200", async () => {
+      const deleted = { _id: "abc123", nome: "Removido" };
       mockFindByIdAndDelete.mockResolvedValue(deleted);
-      const req = mockReq({ params: { id: 'abc123' } });
+      const req = mockReq({ params: { id: "abc123" } });
       const res = mockRes();
 
       await AuthorController.deleteAuthor(req, res);
 
-      expect(mockFindByIdAndDelete).toHaveBeenCalledWith('abc123');
+      expect(mockFindByIdAndDelete).toHaveBeenCalledWith("abc123");
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.send).toHaveBeenCalledWith('Autor excluído com sucesso');
+      expect(res.send).toHaveBeenCalledWith({ message: "Autor excluído com sucesso" });
     });
 
-    it('retorna 404 quando o autor não é encontrado', async () => {
+    it("encaminha NotFoundError ao middleware quando o autor não é encontrado", async () => {
       mockFindByIdAndDelete.mockResolvedValue(null);
-      const req = mockReq({ params: { id: 'inexistente' } });
+      const req = mockReq({ params: { id: "inexistente" } });
       const res = mockRes();
+      const next = jest.fn();
 
-      await AuthorController.deleteAuthor(req, res);
+      await AuthorController.deleteAuthor(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.send).toHaveBeenCalledWith('Autor não encontrado');
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({ message: "Autor não encontrado", status: 404 }),
+      );
+      expect(next.mock.calls[0][0]).toBeInstanceOf(NotFoundError);
     });
 
-    it('retorna 500 em caso de erro', async () => {
-      mockFindByIdAndDelete.mockRejectedValue(new Error('CastError'));
-      const req = mockReq({ params: { id: 'invalido' } });
+    it("encaminha o erro ao middleware de tratamento de erros", async () => {
+      const error = new Error("CastError");
+      mockFindByIdAndDelete.mockRejectedValue(error);
+      const req = mockReq({ params: { id: "invalido" } });
       const res = mockRes();
+      const next = jest.fn();
 
-      await AuthorController.deleteAuthor(req, res);
+      await AuthorController.deleteAuthor(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.send).toHaveBeenCalledWith({
-        message: 'CastError - Falha ao excluir o autor.',
-      });
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(next).toHaveBeenCalledWith(error);
     });
   });
 });

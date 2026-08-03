@@ -1,17 +1,18 @@
-import { author } from '../models/Author.js';
+import NotFoundError from "../errors/NotFoundError.js";
+import { author } from "../models/index.js";
 
 class AuthorController {
-  static async listAuthors(req, res) {
+  static async listAuthors(req, res, next) {
     try {
       const authors = await author.find({});
 
       res.status(200).json(authors);
     } catch (error) {
-      res.status(500).send({ message: `${error.message} - Falha ao listar os autores.` });
+      next(error);
     }
   }
 
-  static async getAuthorById(req, res) {
+  static async getAuthorById(req, res, next) {
     try {
       const id = req.params.id;
       const foundAuthor = await author.findById(id);
@@ -19,27 +20,27 @@ class AuthorController {
       if (foundAuthor) {
         res.status(200).json(foundAuthor);
       } else {
-        res.status(404).send('Autor não encontrado');
+        next(new NotFoundError("Autor não encontrado"));
       }
     } catch (error) {
-      res.status(500).send({ message: `${error.message} - Falha ao buscar o autor.` });
+      next(error);
     }
   }
 
-  static async createAuthor(req, res) {
+  static async createAuthor(req, res, next) {
     try {
       const newAuthor = await author.create(req.body);
 
       res.status(201).json({
-        message: 'Autor adicionado com sucesso',
+        message: "Autor adicionado com sucesso",
         autor: newAuthor,
       });
     } catch (error) {
-      res.status(500).send({ message: `${error.message} - Falha ao adicionar o autor.` });
+      next(error);
     }
   }
 
-  static async updateAuthor(req, res) {
+  static async updateAuthor(req, res, next) {
     try {
       const id = req.params.id;
       const updatedAuthor = await author.findByIdAndUpdate(id, req.body, { new: true });
@@ -47,25 +48,25 @@ class AuthorController {
       if (updatedAuthor) {
         res.status(200).json(updatedAuthor);
       } else {
-        res.status(404).send('Autor não encontrado');
+        next(new NotFoundError("Autor não encontrado"));
       }
     } catch (error) {
-      res.status(500).send({ message: `${error.message} - Falha ao atualizar o autor.` });
+      next(error);
     }
   }
 
-  static async deleteAuthor(req, res) {
+  static async deleteAuthor(req, res, next) {
     try {
       const id = req.params.id;
       const deletedAuthor = await author.findByIdAndDelete(id);
 
       if (deletedAuthor) {
-        res.status(200).send('Autor excluído com sucesso');
+        res.status(200).send({ message: "Autor excluído com sucesso" });
       } else {
-        res.status(404).send('Autor não encontrado');
+        next(new NotFoundError("Autor não encontrado"));
       }
     } catch (error) {
-      res.status(500).send({ message: `${error.message} - Falha ao excluir o autor.` });
+      next(error);
     }
   }
 }

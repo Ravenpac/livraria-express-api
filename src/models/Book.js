@@ -1,5 +1,4 @@
-import mongoose from 'mongoose';
-import { authorSchema } from './Author.js';
+import mongoose from "mongoose";
 
 const bookSchema = new mongoose.Schema(
   {
@@ -9,22 +8,34 @@ const bookSchema = new mongoose.Schema(
     },
     titulo: {
       type: String,
-      required: true,
+      required: [true, "O título do livro é obrigatório"],
     },
-    autor: authorSchema,
+    autor: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "autores",
+      required: [true, "O autor do livro é obrigatório"],
+    },
     editora: {
       type: String,
+      required: [true, "A editora do livro é obrigatória"],
+      enum: {
+        values: ["Casa do Código", "Novatec", "Alura", "Outros"],
+        message:
+          "A editora {VALUE} não é válida. Escolha entre: Casa do Código, Novatec, Alura ou Outros",
+      },
     },
     preco: {
       type: Number,
     },
     paginas: {
       type: Number,
+      min: [1, "O livro deve ter pelo menos uma página"],
+      max: [5000, "O livro não pode ter mais de 5.000 páginas"],
     },
   },
   { versionKey: false },
 );
 
-const book = mongoose.model('livros', bookSchema);
+const book = mongoose.model("livros", bookSchema);
 
 export default book;

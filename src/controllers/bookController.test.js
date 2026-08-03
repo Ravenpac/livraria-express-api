@@ -1,4 +1,5 @@
-import { jest } from '@jest/globals';
+import { jest } from "@jest/globals";
+import NotFoundError from "../errors/NotFoundError.js";
 
 const mockFind = jest.fn();
 const mockFindById = jest.fn();
@@ -7,7 +8,7 @@ const mockFindByIdAndUpdate = jest.fn();
 const mockFindByIdAndDelete = jest.fn();
 const mockAuthorFindById = jest.fn();
 
-jest.unstable_mockModule('../models/Book.js', () => ({
+jest.unstable_mockModule("../models/Book.js", () => ({
   default: {
     find: mockFind,
     findById: mockFindById,
@@ -17,13 +18,13 @@ jest.unstable_mockModule('../models/Book.js', () => ({
   },
 }));
 
-jest.unstable_mockModule('../models/Author.js', () => ({
+jest.unstable_mockModule("../models/Author.js", () => ({
   author: {
     findById: mockAuthorFindById,
   },
 }));
 
-const BookController = (await import('./bookController.js')).default;
+const BookController = (await import("./bookController.js")).default;
 
 function mockReq(overrides = {}) {
   return { params: {}, body: {}, ...overrides };
@@ -41,10 +42,10 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
-describe('BookController', () => {
-  describe('listBooks', () => {
-    it('retorna todos os livros com status 200', async () => {
-      const books = [{ titulo: 'A' }, { titulo: 'B' }];
+describe("BookController", () => {
+  describe("listBooks", () => {
+    it("retorna todos os livros com status 200", async () => {
+      const books = [{ titulo: "A" }, { titulo: "B" }];
       mockFind.mockResolvedValue(books);
       const req = mockReq();
       const res = mockRes();
@@ -56,64 +57,68 @@ describe('BookController', () => {
       expect(res.json).toHaveBeenCalledWith(books);
     });
 
-    it('retorna 500 em caso de erro', async () => {
-      mockFind.mockRejectedValue(new Error('DB error'));
+    it("encaminha o erro ao middleware de tratamento de erros", async () => {
+      const error = new Error("DB error");
+      mockFind.mockRejectedValue(error);
       const req = mockReq();
       const res = mockRes();
+      const next = jest.fn();
 
-      await BookController.listBooks(req, res);
+      await BookController.listBooks(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.send).toHaveBeenCalledWith({
-        message: 'DB error - Falha ao listar os livros.',
-      });
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(next).toHaveBeenCalledWith(error);
     });
   });
 
-  describe('getBookById', () => {
-    it('retorna um livro com status 200', async () => {
-      const book = { _id: 'abc123', titulo: 'Teste' };
+  describe("getBookById", () => {
+    it("retorna um livro com status 200", async () => {
+      const book = { _id: "abc123", titulo: "Teste" };
       mockFindById.mockResolvedValue(book);
-      const req = mockReq({ params: { id: 'abc123' } });
+      const req = mockReq({ params: { id: "abc123" } });
       const res = mockRes();
 
       await BookController.getBookById(req, res);
 
-      expect(mockFindById).toHaveBeenCalledWith('abc123');
+      expect(mockFindById).toHaveBeenCalledWith("abc123");
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(book);
     });
 
-    it('retorna 404 quando o livro não é encontrado', async () => {
+    it("encaminha NotFoundError ao middleware quando o livro não é encontrado", async () => {
       mockFindById.mockResolvedValue(null);
-      const req = mockReq({ params: { id: 'inexistente' } });
+      const req = mockReq({ params: { id: "inexistente" } });
       const res = mockRes();
+      const next = jest.fn();
 
-      await BookController.getBookById(req, res);
+      await BookController.getBookById(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.send).toHaveBeenCalledWith('Livro não encontrado');
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({ message: "Livro não encontrado", status: 404 }),
+      );
+      expect(next.mock.calls[0][0]).toBeInstanceOf(NotFoundError);
     });
 
-    it('retorna 500 em caso de erro', async () => {
-      mockFindById.mockRejectedValue(new Error('CastError'));
-      const req = mockReq({ params: { id: 'invalido' } });
+    it("encaminha o erro ao middleware de tratamento de erros", async () => {
+      const error = new Error("CastError");
+      mockFindById.mockRejectedValue(error);
+      const req = mockReq({ params: { id: "invalido" } });
       const res = mockRes();
+      const next = jest.fn();
 
-      await BookController.getBookById(req, res);
+      await BookController.getBookById(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.send).toHaveBeenCalledWith({
-        message: 'CastError - Falha ao buscar o livro.',
-      });
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(next).toHaveBeenCalledWith(error);
     });
   });
 
-  describe('createBook', () => {
-    it('cria um livro e retorna status 201', async () => {
-      const authorDoc = { _doc: { _id: 'autor123', nome: 'J.R.R. Tolkien' } };
-      const body = { titulo: 'Novo', autor: 'autor123' };
-      const fullBook = { _id: 'livro123', titulo: 'Novo', autor: authorDoc._doc };
+  describe("createBook", () => {
+    it("cria um livro e retorna status 201", async () => {
+      const authorDoc = { _doc: { _id: "autor123", nome: "J.R.R. Tolkien" } };
+      const body = { titulo: "Novo", autor: "autor123" };
+      const fullBook = { _id: "livro123", titulo: "Novo", autor: authorDoc._doc };
       mockAuthorFindById.mockResolvedValue(authorDoc);
       mockCreate.mockResolvedValue(fullBook);
       const req = mockReq({ body });
@@ -121,193 +126,221 @@ describe('BookController', () => {
 
       await BookController.createBook(req, res);
 
-      expect(mockAuthorFindById).toHaveBeenCalledWith('autor123');
+      expect(mockAuthorFindById).toHaveBeenCalledWith("autor123");
       expect(mockCreate).toHaveBeenCalledWith({
-        titulo: 'Novo',
-        autor: { _id: 'autor123', nome: 'J.R.R. Tolkien' },
+        titulo: "Novo",
+        autor: { _id: "autor123", nome: "J.R.R. Tolkien" },
       });
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith({
-        message: 'Livro adicionado com sucesso',
+        message: "Livro adicionado com sucesso",
         livro: fullBook,
       });
     });
 
-    it('retorna 500 em caso de erro', async () => {
-      mockAuthorFindById.mockRejectedValue(new Error('CastError'));
-      const req = mockReq({ body: { autor: 'invalido' } });
+    it("encaminha o erro ao middleware de tratamento de erros", async () => {
+      const error = new Error("CastError");
+      mockAuthorFindById.mockRejectedValue(error);
+      const req = mockReq({ body: { autor: "invalido" } });
       const res = mockRes();
+      const next = jest.fn();
 
-      await BookController.createBook(req, res);
+      await BookController.createBook(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.send).toHaveBeenCalledWith({
-        message: 'CastError - Falha ao adicionar o livro.',
-      });
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(next).toHaveBeenCalledWith(error);
+    });
+
+    it("encaminha a validação do mongoose ao middleware quando autor está ausente ou vazio", async () => {
+      const error = new Error("ValidationError");
+      const body = { titulo: "Sem autor", autor: "" };
+      mockCreate.mockRejectedValue(error);
+      const req = mockReq({ body });
+      const res = mockRes();
+      const next = jest.fn();
+
+      await BookController.createBook(req, res, next);
+
+      expect(mockAuthorFindById).not.toHaveBeenCalled();
+      expect(mockCreate).toHaveBeenCalledWith({ titulo: "Sem autor" });
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(next).toHaveBeenCalledWith(error);
     });
   });
 
-  describe('updateBook', () => {
-    it('atualiza um livro com autor e retorna status 200', async () => {
-      const authorDoc = { _doc: { _id: 'autor123', nome: 'J.R.R. Tolkien' } };
-      const updated = { _id: 'abc123', titulo: 'Atualizado', autor: authorDoc._doc };
+  describe("updateBook", () => {
+    it("atualiza um livro com autor e retorna status 200", async () => {
+      const authorDoc = { _doc: { _id: "autor123", nome: "J.R.R. Tolkien" } };
+      const updated = { _id: "abc123", titulo: "Atualizado", autor: authorDoc._doc };
       mockAuthorFindById.mockResolvedValue(authorDoc);
       mockFindByIdAndUpdate.mockResolvedValue(updated);
       const req = mockReq({
-        params: { id: 'abc123' },
-        body: { titulo: 'Atualizado', autor: 'autor123' },
+        params: { id: "abc123" },
+        body: { titulo: "Atualizado", autor: "autor123" },
       });
       const res = mockRes();
 
       await BookController.updateBook(req, res);
 
-      expect(mockAuthorFindById).toHaveBeenCalledWith('autor123');
+      expect(mockAuthorFindById).toHaveBeenCalledWith("autor123");
       expect(mockFindByIdAndUpdate).toHaveBeenCalledWith(
-        'abc123',
-        { titulo: 'Atualizado', autor: { _id: 'autor123', nome: 'J.R.R. Tolkien' } },
+        "abc123",
+        { titulo: "Atualizado", autor: { _id: "autor123", nome: "J.R.R. Tolkien" } },
         { new: true },
       );
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(updated);
     });
 
-    it('atualiza um livro sem autor e retorna status 200', async () => {
-      const updated = { _id: 'abc123', titulo: 'Atualizado' };
+    it("atualiza um livro sem autor e retorna status 200", async () => {
+      const updated = { _id: "abc123", titulo: "Atualizado" };
       mockFindByIdAndUpdate.mockResolvedValue(updated);
-      const req = mockReq({ params: { id: 'abc123' }, body: { titulo: 'Atualizado' } });
+      const req = mockReq({ params: { id: "abc123" }, body: { titulo: "Atualizado" } });
       const res = mockRes();
 
       await BookController.updateBook(req, res);
 
       expect(mockFindByIdAndUpdate).toHaveBeenCalledWith(
-        'abc123',
-        { titulo: 'Atualizado' },
+        "abc123",
+        { titulo: "Atualizado" },
         { new: true },
       );
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(updated);
     });
 
-    it('retorna 404 quando o livro não é encontrado', async () => {
+    it("encaminha NotFoundError ao middleware quando o livro não é encontrado", async () => {
       mockFindByIdAndUpdate.mockResolvedValue(null);
-      const req = mockReq({ params: { id: 'inexistente' }, body: { titulo: 'X' } });
+      const req = mockReq({ params: { id: "inexistente" }, body: { titulo: "X" } });
       const res = mockRes();
+      const next = jest.fn();
 
-      await BookController.updateBook(req, res);
+      await BookController.updateBook(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.send).toHaveBeenCalledWith('Livro não encontrado');
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({ message: "Livro não encontrado", status: 404 }),
+      );
+      expect(next.mock.calls[0][0]).toBeInstanceOf(NotFoundError);
     });
 
-    it('retorna 404 quando o autor informado não existe', async () => {
+    it("encaminha NotFoundError ao middleware quando o autor informado não existe", async () => {
       mockAuthorFindById.mockResolvedValue(null);
       const req = mockReq({
-        params: { id: 'abc123' },
-        body: { titulo: 'X', autor: 'inexistente' },
+        params: { id: "abc123" },
+        body: { titulo: "X", autor: "inexistente" },
       });
       const res = mockRes();
+      const next = jest.fn();
 
-      await BookController.updateBook(req, res);
+      await BookController.updateBook(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.send).toHaveBeenCalledWith('Autor não encontrado');
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({ message: "Autor não encontrado", status: 404 }),
+      );
+      expect(next.mock.calls[0][0]).toBeInstanceOf(NotFoundError);
     });
 
-    it('retorna 500 em caso de erro', async () => {
-      mockFindByIdAndUpdate.mockRejectedValue(new Error('CastError'));
-      const req = mockReq({ params: { id: 'invalido' } });
+    it("encaminha o erro ao middleware de tratamento de erros", async () => {
+      const error = new Error("CastError");
+      mockFindByIdAndUpdate.mockRejectedValue(error);
+      const req = mockReq({ params: { id: "invalido" } });
       const res = mockRes();
+      const next = jest.fn();
 
-      await BookController.updateBook(req, res);
+      await BookController.updateBook(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.send).toHaveBeenCalledWith({
-        message: 'CastError - Falha ao atualizar o livro.',
-      });
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(next).toHaveBeenCalledWith(error);
     });
   });
 
-  describe('deleteBook', () => {
-    it('exclui um livro e retorna status 200', async () => {
-      const deleted = { _id: 'abc123', titulo: 'Removido' };
+  describe("deleteBook", () => {
+    it("exclui um livro e retorna status 200", async () => {
+      const deleted = { _id: "abc123", titulo: "Removido" };
       mockFindByIdAndDelete.mockResolvedValue(deleted);
-      const req = mockReq({ params: { id: 'abc123' } });
+      const req = mockReq({ params: { id: "abc123" } });
       const res = mockRes();
 
       await BookController.deleteBook(req, res);
 
-      expect(mockFindByIdAndDelete).toHaveBeenCalledWith('abc123');
+      expect(mockFindByIdAndDelete).toHaveBeenCalledWith("abc123");
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.send).toHaveBeenCalledWith('Livro excluído com sucesso');
+      expect(res.send).toHaveBeenCalledWith({ message: "Livro excluído com sucesso" });
     });
 
-    it('retorna 404 quando o livro não é encontrado', async () => {
+    it("encaminha NotFoundError ao middleware quando o livro não é encontrado", async () => {
       mockFindByIdAndDelete.mockResolvedValue(null);
-      const req = mockReq({ params: { id: 'inexistente' } });
+      const req = mockReq({ params: { id: "inexistente" } });
       const res = mockRes();
+      const next = jest.fn();
 
-      await BookController.deleteBook(req, res);
+      await BookController.deleteBook(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.send).toHaveBeenCalledWith('Livro não encontrado');
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({ message: "Livro não encontrado", status: 404 }),
+      );
+      expect(next.mock.calls[0][0]).toBeInstanceOf(NotFoundError);
     });
 
-    it('retorna 500 em caso de erro', async () => {
-      mockFindByIdAndDelete.mockRejectedValue(new Error('CastError'));
-      const req = mockReq({ params: { id: 'invalido' } });
+    it("encaminha o erro ao middleware de tratamento de erros", async () => {
+      const error = new Error("CastError");
+      mockFindByIdAndDelete.mockRejectedValue(error);
+      const req = mockReq({ params: { id: "invalido" } });
       const res = mockRes();
+      const next = jest.fn();
 
-      await BookController.deleteBook(req, res);
+      await BookController.deleteBook(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.send).toHaveBeenCalledWith({
-        message: 'CastError - Falha ao excluir o livro.',
-      });
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(next).toHaveBeenCalledWith(error);
     });
   });
 
-  describe('listBooksByPublisher', () => {
-    it('filtra livros por editora', async () => {
-      const books = [{ titulo: 'A', editora: 'HarperCollins' }];
+  describe("listBooksByPublisher", () => {
+    it("filtra livros por editora", async () => {
+      const books = [{ titulo: "A", editora: "HarperCollins" }];
       mockFind.mockResolvedValue(books);
-      const req = mockReq({ query: { editora: 'HarperCollins' } });
+      const req = mockReq({ query: { editora: "HarperCollins" } });
       const res = mockRes();
 
       await BookController.listBooksByPublisher(req, res);
 
-      expect(mockFind).toHaveBeenCalledWith({ editora: 'HarperCollins' });
+      expect(mockFind).toHaveBeenCalledWith({ editora: "HarperCollins" });
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(books);
     });
 
-    it('filtra livros por título', async () => {
-      const books = [{ titulo: 'O Hobbit' }];
+    it("filtra livros por título", async () => {
+      const books = [{ titulo: "O Hobbit" }];
       mockFind.mockResolvedValue(books);
-      const req = mockReq({ query: { titulo: 'O Hobbit' } });
+      const req = mockReq({ query: { titulo: "O Hobbit" } });
       const res = mockRes();
 
       await BookController.listBooksByPublisher(req, res);
 
-      expect(mockFind).toHaveBeenCalledWith({ titulo: 'O Hobbit' });
+      expect(mockFind).toHaveBeenCalledWith({ titulo: "O Hobbit" });
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(books);
     });
 
-    it('filtra livros por editora e título', async () => {
-      const books = [{ titulo: 'O Hobbit', editora: 'HarperCollins' }];
+    it("filtra livros por editora e título", async () => {
+      const books = [{ titulo: "O Hobbit", editora: "HarperCollins" }];
       mockFind.mockResolvedValue(books);
-      const req = mockReq({ query: { editora: 'HarperCollins', titulo: 'O Hobbit' } });
+      const req = mockReq({ query: { editora: "HarperCollins", titulo: "O Hobbit" } });
       const res = mockRes();
 
       await BookController.listBooksByPublisher(req, res);
 
-      expect(mockFind).toHaveBeenCalledWith({ editora: 'HarperCollins', titulo: 'O Hobbit' });
+      expect(mockFind).toHaveBeenCalledWith({ editora: "HarperCollins", titulo: "O Hobbit" });
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(books);
     });
 
-    it('retorna todos quando não há filtros', async () => {
-      const books = [{ titulo: 'A' }, { titulo: 'B' }];
+    it("retorna todos quando não há filtros", async () => {
+      const books = [{ titulo: "A" }, { titulo: "B" }];
       mockFind.mockResolvedValue(books);
       const req = mockReq({ query: {} });
       const res = mockRes();
@@ -319,17 +352,17 @@ describe('BookController', () => {
       expect(res.json).toHaveBeenCalledWith(books);
     });
 
-    it('retorna 500 em caso de erro', async () => {
-      mockFind.mockRejectedValue(new Error('DB error'));
-      const req = mockReq({ query: { editora: 'X' } });
+    it("encaminha o erro ao middleware de tratamento de erros", async () => {
+      const error = new Error("DB error");
+      mockFind.mockRejectedValue(error);
+      const req = mockReq({ query: { editora: "X" } });
       const res = mockRes();
+      const next = jest.fn();
 
-      await BookController.listBooksByPublisher(req, res);
+      await BookController.listBooksByPublisher(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.send).toHaveBeenCalledWith({
-        message: 'DB error - Falha ao listar os livros por editora.',
-      });
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(next).toHaveBeenCalledWith(error);
     });
   });
 });
