@@ -17,9 +17,8 @@ function mockResults(value) {
   const chain = {
     sort: jest.fn(() => chain),
     limit: jest.fn(() => chain),
-    skip: jest.fn(() => chain),
+    skip: jest.fn(() => Promise.resolve(value)),
   };
-  chain.exec = jest.fn().mockResolvedValue(value);
   return chain;
 }
 
@@ -36,7 +35,6 @@ describe("pagination", () => {
     expect(results.sort).toHaveBeenCalledWith({ _id: -1 });
     expect(results.limit).toHaveBeenCalledWith(10);
     expect(results.skip).toHaveBeenCalledWith(0);
-    expect(results.exec).toHaveBeenCalledTimes(1);
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith(books);
     expect(next).not.toHaveBeenCalled();
@@ -66,7 +64,7 @@ describe("pagination", () => {
 
     await pagination(req, res, next);
 
-    expect(results.exec).not.toHaveBeenCalled();
+    expect(results.limit).not.toHaveBeenCalled();
     expect(res.json).not.toHaveBeenCalled();
     expect(next).toHaveBeenCalledTimes(1);
     expect(next).toHaveBeenCalledWith(
@@ -86,7 +84,7 @@ describe("pagination", () => {
 
     await pagination(req, res, next);
 
-    expect(results.exec).not.toHaveBeenCalled();
+    expect(results.limit).not.toHaveBeenCalled();
     expect(res.json).not.toHaveBeenCalled();
     expect(next).toHaveBeenCalledTimes(1);
     expect(next.mock.calls[0][0]).toBeInstanceOf(InvalidRequest);
@@ -95,7 +93,7 @@ describe("pagination", () => {
   it("encaminha o erro ao middleware de tratamento de erros", async () => {
     const error = new Error("DB error");
     const results = mockResults([]);
-    results.exec = jest.fn().mockRejectedValue(error);
+    results.skip = jest.fn(() => Promise.reject(error));
     const req = mockReq(results);
     const res = mockRes();
     const next = jest.fn();

@@ -82,9 +82,7 @@ describe("BookController", () => {
   describe("getBookById", () => {
     it("retorna um livro com status 200", async () => {
       const book = { _id: "abc123", titulo: "Teste", autor: { nome: "Autor" } };
-      mockFindById.mockReturnValue({
-        populate: jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue(book) }),
-      });
+      mockFindById.mockResolvedValue(book);
       const req = mockReq({ params: { id: "abc123" } });
       const res = mockRes();
 
@@ -96,9 +94,7 @@ describe("BookController", () => {
     });
 
     it("encaminha NotFoundError ao middleware quando o livro não é encontrado", async () => {
-      mockFindById.mockReturnValue({
-        populate: jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue(null) }),
-      });
+      mockFindById.mockResolvedValue(null);
       const req = mockReq({ params: { id: "inexistente" } });
       const res = mockRes();
       const next = jest.fn();
@@ -114,9 +110,7 @@ describe("BookController", () => {
 
     it("encaminha o erro ao middleware de tratamento de erros", async () => {
       const error = new Error("CastError");
-      mockFindById.mockReturnValue({
-        populate: jest.fn().mockReturnValue({ exec: jest.fn().mockRejectedValue(error) }),
-      });
+      mockFindById.mockRejectedValue(error);
       const req = mockReq({ params: { id: "invalido" } });
       const res = mockRes();
       const next = jest.fn();

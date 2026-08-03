@@ -18,8 +18,7 @@ async function pagination(req, res, next) {
       const paginatedResults = await results
         .sort({ [orderField]: order })
         .limit(parseInt(limit))
-        .skip((parseInt(page) - 1) * parseInt(limit))
-        .exec();
+        .skip((parseInt(page) - 1) * parseInt(limit));
 
       res.status(200).json(paginatedResults);
     }

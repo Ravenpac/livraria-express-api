@@ -18,7 +18,7 @@ class BookController {
   static async getBookById(req, res, next) {
     try {
       const id = req.params.id;
-      const foundBook = await book.findById(id).populate("autor").exec();
+      const foundBook = await book.findById(id);
 
       if (foundBook) {
         res.status(200).json(foundBook);

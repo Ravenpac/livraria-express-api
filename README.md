@@ -93,7 +93,7 @@ Request (POST/PUT):
 }
 ```
 
-No banco, `autor` é armazenado como referência ao ID do autor (`"autor": "ID_DO_AUTOR"`). Nas respostas de `GET /livros` e `GET /livros/busca`, o campo `autor` é retornado como ID. Já em `GET /livros/:id`, o Mongoose faz `populate`, então o objeto do autor completo é retornado:
+No banco, `autor` é armazenado como referência ao ID do autor (`"autor": "ID_DO_AUTOR"`). O plugin `mongoose-autopopulate` (`autopopulate: true` no campo `autor`) faz com que o Mongoose preencha automaticamente o objeto do autor em todas as respostas de GET:
 
 ```json
 {
