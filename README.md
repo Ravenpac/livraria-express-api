@@ -46,24 +46,36 @@ npm test
 
 ### Livros
 
-| Método | Endpoint        | Descrição                                         |
-| ------ | --------------- | ------------------------------------------------- |
-| GET    | `/livros`       | Listar todos                                      |
-| GET    | `/livros/busca` | Buscar por editora/titulo (`?editora=X&titulo=Y`) |
-| GET    | `/livros/:id`   | Buscar por ID                                     |
-| POST   | `/livros`       | Adicionar livro                                   |
-| PUT    | `/livros/:id`   | Atualizar livro                                   |
-| DELETE | `/livros/:id`   | Excluir livro                                     |
+| Método | Endpoint        | Descrição                                                                                                         |
+| ------ | --------------- | ----------------------------------------------------------------------------------------------------------------- |
+| GET    | `/livros`       | Listar todos com paginação (`?limit=10&page=1&order=_id:-1`)                                                      |
+| GET    | `/livros/busca` | Buscar com paginação (`?editora=X&titulo=Y&minPaginas=A&maxPaginas=B&nomeAutor=Z&limit=10&page=1&order=titulo:1`) |
+| GET    | `/livros/:id`   | Buscar por ID                                                                                                     |
+| POST   | `/livros`       | Adicionar livro                                                                                                   |
+| PUT    | `/livros/:id`   | Atualizar livro                                                                                                   |
+| DELETE | `/livros/:id`   | Excluir livro                                                                                                     |
 
 ### Autores
 
-| Método | Endpoint       | Descrição       |
-| ------ | -------------- | --------------- |
-| GET    | `/autores`     | Listar todos    |
-| GET    | `/autores/:id` | Buscar por ID   |
-| POST   | `/autores`     | Adicionar autor |
-| PUT    | `/autores/:id` | Atualizar autor |
-| DELETE | `/autores/:id` | Excluir autor   |
+| Método | Endpoint       | Descrição                                                    |
+| ------ | -------------- | ------------------------------------------------------------ |
+| GET    | `/autores`     | Listar todos com paginação (`?limit=10&page=1&order=_id:-1`) |
+| GET    | `/autores/:id` | Buscar por ID                                                |
+| POST   | `/autores`     | Adicionar autor                                              |
+| PUT    | `/autores/:id` | Atualizar autor                                              |
+| DELETE | `/autores/:id` | Excluir autor                                                |
+
+### Paginação
+
+`GET /livros`, `GET /livros/busca` e `GET /autores` aceitam os parâmetros de paginação:
+
+| Parâmetro | Descrição                                                              | Padrão   |
+| --------- | ---------------------------------------------------------------------- | -------- |
+| `limit`   | Quantidade de itens por página                                         | `10`     |
+| `page`    | Número da página (começa em 1)                                         | `1`      |
+| `order`   | Ordenação no formato `campo:1` (crescente) ou `campo:-1` (decrescente) | `_id:-1` |
+
+A paginação é aplicada pelo middleware `src/middlewares/pagination.js` após o controller montar a query.
 
 ### Schemas
 
@@ -81,13 +93,17 @@ Request (POST/PUT):
 }
 ```
 
-Response (`autor` é armazenado como referência ao ID do autor):
+No banco, `autor` é armazenado como referência ao ID do autor (`"autor": "ID_DO_AUTOR"`). Nas respostas de `GET /livros` e `GET /livros/busca`, o campo `autor` é retornado como ID. Já em `GET /livros/:id`, o Mongoose faz `populate`, então o objeto do autor completo é retornado:
 
 ```json
 {
   "_id": "abc123",
   "titulo": "O Senhor dos Anéis",
-  "autor": "ID_DO_AUTOR",
+  "autor": {
+    "_id": "autor123",
+    "nome": "J.R.R. Tolkien",
+    "nacionalidade": "Inglaterra"
+  },
   "editora": "Casa do Código",
   "preco": 89.9,
   "paginas": 1200

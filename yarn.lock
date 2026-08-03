@@ -2629,6 +2629,11 @@ mongodb@^7.5.0:
     bson "^7.2.0"
     mongodb-connection-string-url "^7.0.1"
 
+mongoose-autopopulate@^1.2.1:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/mongoose-autopopulate/-/mongoose-autopopulate-1.2.1.tgz#3768c3eba75b02db24d7424fd91c8a3b05b2a7d5"
+  integrity sha512-mn6AM7iFqsB9Rqyp2XD3tqXgC+X9dEv+H+eVmunskSb3fqiT6umgwkVPpIm7+Xe5h9/b3mIP/Le670Rx6lLnUw==
+
 mongoose@7.3.4:
   version "7.3.4"
   resolved "https://registry.yarnpkg.com/mongoose/-/mongoose-7.3.4.tgz#d26934d62575cc01c8cbb70252c14dc8cc30ef49"

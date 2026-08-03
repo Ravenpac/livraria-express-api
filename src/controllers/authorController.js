@@ -4,9 +4,11 @@ import { author } from "../models/index.js";
 class AuthorController {
   static async listAuthors(req, res, next) {
     try {
-      const authors = await author.find({});
+      const searchAuthors = author.find();
 
-      res.status(200).json(authors);
+      req.results = searchAuthors;
+
+      next();
     } catch (error) {
       next(error);
     }

@@ -1,13 +1,15 @@
-import { book } from "../models/index.js";
-import { author } from "../models/index.js";
+import { book, author } from "../models/index.js";
 import NotFoundError from "../errors/NotFoundError.js";
+import InvalidRequest from "../errors/InvalidRequest.js";
 
 class BookController {
   static async listBooks(req, res, next) {
     try {
-      const books = await book.find({});
+      const searchBooks = book.find();
 
-      res.status(200).json(books);
+      req.results = searchBooks;
+
+      next();
     } catch (error) {
       next(error);
     }
@@ -16,7 +18,7 @@ class BookController {
   static async getBookById(req, res, next) {
     try {
       const id = req.params.id;
-      const foundBook = await book.findById(id);
+      const foundBook = await book.findById(id).populate("autor").exec();
 
       if (foundBook) {
         res.status(200).json(foundBook);
@@ -36,7 +38,12 @@ class BookController {
 
       if (newBook.autor) {
         const foundAuthor = await author.findById(newBook.autor);
-        fullBook.autor = { ...foundAuthor._doc };
+
+        if (!foundAuthor) {
+          return next(new NotFoundError("Autor não encontrado"));
+        }
+
+        fullBook.autor = newBook.autor;
       } else {
         delete fullBook.autor;
       }
@@ -62,7 +69,6 @@ class BookController {
         if (!foundAuthor) {
           return next(new NotFoundError("Autor não encontrado"));
         }
-        updatedBookData.autor = { ...foundAuthor._doc };
       }
 
       const updatedBook = await book.findByIdAndUpdate(id, updatedBookData, { new: true });
@@ -92,21 +98,56 @@ class BookController {
     }
   }
 
-  static async listBooksByPublisher(req, res, next) {
+  static async listBooksByFilter(req, res, next) {
     try {
-      const publisher = req.query.editora;
-      const title = req.query.titulo;
+      const search = await BookController.buildSearchQuery(req.query, next);
 
-      const filter = {};
-      if (publisher) filter.editora = publisher;
-      if (title) filter.titulo = title;
+      const searchBooks = book.find(search);
 
-      const books = await book.find(filter);
+      req.results = searchBooks;
 
-      res.status(200).json(books);
+      next();
     } catch (error) {
       next(error);
     }
+  }
+
+  static async buildSearchQuery(parameters, next) {
+    const { editora, titulo, minPaginas, maxPaginas, nomeAutor } = parameters;
+
+    if (minPaginas && maxPaginas && parseInt(minPaginas) > parseInt(maxPaginas)) {
+      return next(new InvalidRequest("minPaginas não pode ser maior que maxPaginas"));
+    }
+
+    const searchQuery = {};
+
+    if (editora) {
+      searchQuery.editora = { $regex: editora, $options: "i" };
+    }
+
+    if (titulo) {
+      searchQuery.titulo = { $regex: titulo, $options: "i" };
+    }
+
+    if (minPaginas) {
+      searchQuery.paginas = { ...searchQuery.paginas, $gte: parseInt(minPaginas) };
+    }
+
+    if (maxPaginas) {
+      searchQuery.paginas = { ...searchQuery.paginas, $lte: parseInt(maxPaginas) };
+    }
+
+    if (nomeAutor) {
+      const foundAuthor = await author.findOne({ nome: { $regex: nomeAutor, $options: "i" } });
+
+      if (foundAuthor) {
+        searchQuery.autor = foundAuthor._id;
+      } else {
+        searchQuery.autor = null;
+      }
+    }
+
+    return searchQuery;
   }
 }
 

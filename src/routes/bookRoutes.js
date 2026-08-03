@@ -1,11 +1,12 @@
 import express from "express";
 import BookController from "../controllers/bookController.js";
+import pagination from "../middlewares/pagination.js";
 
 const router = express.Router();
 
-router.get("/livros", BookController.listBooks);
+router.get("/livros", BookController.listBooks, pagination);
 
-router.get("/livros/busca", BookController.listBooksByPublisher);
+router.get("/livros/busca", BookController.listBooksByFilter, pagination);
 
 router.get("/livros/:id", BookController.getBookById);
 

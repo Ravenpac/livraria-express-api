@@ -37,22 +37,27 @@ beforeEach(() => {
 
 describe("AuthorController", () => {
   describe("listAuthors", () => {
-    it("retorna todos os autores com status 200", async () => {
-      const authors = [{ nome: "Machado de Assis" }, { nome: "Clarice Lispector" }];
-      mockFind.mockResolvedValue(authors);
+    it("define os resultados e encaminha ao próximo middleware", async () => {
+      const query = {};
+      mockFind.mockReturnValue(query);
       const req = mockReq();
       const res = mockRes();
+      const next = jest.fn();
 
-      await AuthorController.listAuthors(req, res);
+      await AuthorController.listAuthors(req, res, next);
 
-      expect(mockFind).toHaveBeenCalledWith({});
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith(authors);
+      expect(mockFind).toHaveBeenCalledWith();
+      expect(req.results).toBe(query);
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(next).toHaveBeenCalledWith();
+      expect(res.json).not.toHaveBeenCalled();
     });
 
     it("encaminha o erro ao middleware de tratamento de erros", async () => {
       const error = new Error("DB error");
-      mockFind.mockRejectedValue(error);
+      mockFind.mockImplementation(() => {
+        throw error;
+      });
       const req = mockReq();
       const res = mockRes();
       const next = jest.fn();
